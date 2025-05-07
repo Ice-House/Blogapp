@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { usePosts } from "@/hooks/use-posts";
 import { useQuery } from "@tanstack/react-query";
 import { Post, Tag } from "@shared/schema";
@@ -15,14 +15,16 @@ const Home = () => {
   // Fetch all posts
   const { data: posts, isLoading, error } = usePosts();
   
-  // Get tags for each post
+  // Fetch all tags - we'll filter them for each post later
+  const { data: allTags } = useQuery<Tag[]>({
+    queryKey: ['/api/tags'],
+  });
+  
+  // Get tags for each post without using hooks inside
   const getTagsForPost = (postId: number) => {
-    const { data: tags } = useQuery({
-      queryKey: [`/api/posts/${postId}/tags`],
-      enabled: false,
-    });
-    
-    return tags || [];
+    // This is just a temporary solution until we implement proper post-tag relationships
+    // In a real app, you would have a proper API endpoint to get tags for a specific post
+    return [];
   };
   
   if (isLoading) {
