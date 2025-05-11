@@ -11,17 +11,17 @@ import { Tag as TagIcon } from "lucide-react";
 
 const Sidebar = () => {
   // Get recent posts for sidebar
-  const { data: posts, isLoading: postsLoading } = useQuery({
+  const { data: posts, isLoading: postsLoading } = useQuery<Post[]>({
     queryKey: ["/api/posts"],
   });
-  
+
   // Get all tags
   const { data: tags, isLoading: tagsLoading } = useQuery({
     queryKey: ["/api/tags"],
   });
-  
+
   const recentPosts = posts?.slice(0, 3) || [];
-  
+
   return (
     <div className="space-y-8">
       {/* Search */}
@@ -41,20 +41,20 @@ const Sidebar = () => {
             }}
             className="flex space-x-2"
           >
-            <Input 
-              type="text" 
-              name="search" 
-              placeholder="Search posts..." 
+            <Input
+              type="text"
+              name="search"
+              placeholder="Search posts..."
               className="flex-1"
             />
             <Button type="submit">Search</Button>
           </form>
         </CardContent>
       </Card>
-      
+
       {/* Categories */}
       <CategoryList />
-      
+
       {/* Popular Tags */}
       <Card>
         <CardHeader>
@@ -63,7 +63,7 @@ const Sidebar = () => {
         <CardContent>
           {tagsLoading ? (
             <div className="flex flex-wrap gap-2">
-              {[1, 2, 3, 4, 5].map(i => (
+              {[1, 2, 3, 4, 5].map((i) => (
                 <Skeleton key={i} className="h-8 w-20" />
               ))}
             </div>
@@ -79,11 +79,13 @@ const Sidebar = () => {
               ))}
             </div>
           ) : (
-            <p className="text-neutral-600 dark:text-neutral-400 text-center py-2">No tags found</p>
+            <p className="text-neutral-600 dark:text-neutral-400 text-center py-2">
+              No tags found
+            </p>
           )}
         </CardContent>
       </Card>
-      
+
       {/* Recent Posts */}
       <Card>
         <CardHeader>
@@ -92,7 +94,7 @@ const Sidebar = () => {
         <CardContent className="space-y-4">
           {postsLoading ? (
             <>
-              {[1, 2, 3].map(i => (
+              {[1, 2, 3].map((i) => (
                 <div key={i} className="flex space-x-3">
                   <Skeleton className="w-16 h-16 rounded-md" />
                   <div className="space-y-2">
@@ -108,7 +110,10 @@ const Sidebar = () => {
                 <Link key={post.id} href={`/post/${post.slug}`}>
                   <a className="flex space-x-3 group">
                     <img
-                      src={post.coverImage || "https://placehold.co/100x100/EEE/999?text=No+Image"}
+                      src={
+                        post.coverImage ||
+                        "https://placehold.co/100x100/EEE/999?text=No+Image"
+                      }
                       alt={post.title}
                       className="w-16 h-16 object-cover rounded-md"
                     />
@@ -117,23 +122,30 @@ const Sidebar = () => {
                         {post.title}
                       </h4>
                       <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-                        {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+                        {formatDistanceToNow(new Date(post.createdAt), {
+                          addSuffix: true,
+                        })}
                       </p>
                     </div>
                   </a>
                 </Link>
               ))}
-              
-              <Link href="/" className="text-primary hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm">
+
+              <Link
+                href="/"
+                className="text-primary hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm"
+              >
                 View All Posts →
               </Link>
             </>
           ) : (
-            <p className="text-neutral-600 dark:text-neutral-400 text-center py-2">No recent posts</p>
+            <p className="text-neutral-600 dark:text-neutral-400 text-center py-2">
+              No recent posts
+            </p>
           )}
         </CardContent>
       </Card>
-      
+
       {/* Newsletter */}
       <Card className="bg-primary/5 dark:bg-primary/10">
         <CardHeader>
@@ -150,12 +162,11 @@ const Sidebar = () => {
             }}
             className="space-y-3"
           >
-            <Input
-              type="email"
-              placeholder="Your email address"
-              required
-            />
-            <Button type="submit" className="w-full bg-primary hover:bg-blue-600">
+            <Input type="email" placeholder="Your email address" required />
+            <Button
+              type="submit"
+              className="w-full bg-primary hover:bg-blue-600"
+            >
               Subscribe
             </Button>
           </form>

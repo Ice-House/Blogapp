@@ -376,8 +376,8 @@ Docker can significantly improve your development workflow!
       }
     ];
     
-    samplePosts.forEach(post => {
-      const createdPost = this.createPost(post);
+    samplePosts.forEach(async (post) => {
+          const createdPost = await this.createPost(post);
       
       // Add tags to posts
       if (createdPost.id === 1) {
@@ -394,18 +394,18 @@ Docker can significantly improve your development workflow!
       // Add comments to posts
       if (createdPost.id === 1) {
         this.createComment({
-          content: "Great introduction to React! Looking forward to more tutorials.",
-          authorName: "Jane Doe",
-          authorEmail: "jane@example.com",
-          postId: createdPost.id,
+          content: ["Great introduction to React! Looking forward to more tutorials."],
+          authorName: ["Jane Doe"],
+          authorEmail: ["jane@example.com"],
+          postId: [createdPost.id], // Wrap the number in an array to match the expected type
           parentId: null
         });
         
         this.createComment({
-          content: "I'm having trouble with hooks. Could you explain them more?",
-          authorName: "John Smith",
-          authorEmail: "john@example.com",
-          postId: createdPost.id,
+          content: ["I'm having trouble with hooks. Could you explain them more?"],
+          authorName: ["John Smith"],
+          authorEmail: ["john@example.com"],
+          postId: [createdPost.id],
           parentId: null
         });
       }
@@ -461,6 +461,10 @@ Docker can significantly improve your development workflow!
       id: this.postId++,
       createdAt: now,
       updatedAt: now,
+      excerpt: post.excerpt ?? null, // Ensure excerpt is either a string or null
+      coverImage: post.coverImage ?? null, // Ensure coverImage is either a string or null
+      published: post.published ?? false, // Ensure published has a default value
+      categoryId: post.categoryId ?? null, // Ensure categoryId is either a number or null
     };
     
     this.posts.set(newPost.id, newPost);
@@ -517,6 +521,7 @@ Docker can significantly improve your development workflow!
     const newCategory: Category = {
       ...category,
       id: this.categoryId++,
+      description: category.description ?? null, // Ensure description is either a string or null
     };
     
     this.categories.set(newCategory.id, newCategory);
@@ -654,6 +659,11 @@ Docker can significantly improve your development workflow!
       ...comment,
       id: this.commentId++,
       createdAt: new Date(),
+      content: typeof comment.content === "string" ? comment.content : "", // Ensure content is a string or default to an empty string
+      postId: Array.isArray(comment.postId) ? comment.postId[0] : (comment.postId ?? 0), // Ensure postId is a number
+      authorName: Array.isArray(comment.authorName) ? comment.authorName.join(", ") : (comment.authorName ?? "Anonymous"), // Ensure authorName is a string
+      authorEmail: Array.isArray(comment.authorEmail) ? comment.authorEmail.join(", ") : (comment.authorEmail ?? "unknown@example.com"), // Ensure authorEmail is a string
+      parentId: Array.isArray(comment.parentId) ? comment.parentId[0] : comment.parentId ?? null, // Ensure parentId is a number or null
     };
     
     this.comments.set(newComment.id, newComment);
@@ -714,4 +724,7 @@ Docker can significantly improve your development workflow!
   }
 }
 
-export const storage = new MemStorage();
+import { DatabaseStorage } from "./database-storage";
+
+// Use DatabaseStorage for persistent storage with PostgreSQL
+export const storage = new DatabaseStorage();

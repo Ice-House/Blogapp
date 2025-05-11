@@ -36,26 +36,40 @@ const Header = () => {
                 <path d="M8 8H24V12H16V24H8V8Z" fill="white" />
                 <path d="M16 16H24V24H16V16Z" fill="white" />
               </svg>
-              <span className="font-bold text-xl text-neutral-900 dark:text-white">Blogfolio</span>
+              <span className="font-bold text-xl text-neutral-900 dark:text-white">
+                BLUE-TECH
+              </span>
             </Link>
           </div>
-          
+
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-8">
-            <Link href="/" className={`px-3 py-2 font-medium ${location === '/' ? 'text-primary' : 'text-neutral-500 hover:text-primary dark:text-neutral-400 dark:hover:text-primary'}`}>
+            <Link
+              href="/"
+              className={`px-3 py-2 font-medium ${location === "/" ? "text-primary" : "text-neutral-500 hover:text-primary dark:text-neutral-400 dark:hover:text-primary"}`}
+            >
               Home
             </Link>
-            <Link href="/category/programming" className={`px-3 py-2 font-medium ${location.startsWith('/category/programming') ? 'text-primary' : 'text-neutral-500 hover:text-primary dark:text-neutral-400 dark:hover:text-primary'}`}>
+            <Link
+              href="/category/programming"
+              className={`px-3 py-2 font-medium ${location.startsWith("/category/programming") ? "text-primary" : "text-neutral-500 hover:text-primary dark:text-neutral-400 dark:hover:text-primary"}`}
+            >
               Programming
             </Link>
-            <Link href="/category/web-development" className={`px-3 py-2 font-medium ${location.startsWith('/category/web-development') ? 'text-primary' : 'text-neutral-500 hover:text-primary dark:text-neutral-400 dark:hover:text-primary'}`}>
+            <Link
+              href="/category/web-development"
+              className={`px-3 py-2 font-medium ${location.startsWith("/category/web-development") ? "text-primary" : "text-neutral-500 hover:text-primary dark:text-neutral-400 dark:hover:text-primary"}`}
+            >
               Web Dev
             </Link>
-            <Link href="/category/design" className={`px-3 py-2 font-medium ${location.startsWith('/category/design') ? 'text-primary' : 'text-neutral-500 hover:text-primary dark:text-neutral-400 dark:hover:text-primary'}`}>
+            <Link
+              href="/category/design"
+              className={`px-3 py-2 font-medium ${location.startsWith("/category/design") ? "text-primary" : "text-neutral-500 hover:text-primary dark:text-neutral-400 dark:hover:text-primary"}`}
+            >
               Design
             </Link>
           </nav>
-          
+
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-4">
             <Button
@@ -68,7 +82,18 @@ const Header = () => {
             </Button>
             <Link href="/search">
               <Button variant="ghost" size="icon" aria-label="Search">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-search">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="lucide lucide-search"
+                >
                   <circle cx="11" cy="11" r="8" />
                   <path d="m21 21-4.3-4.3" />
                 </svg>
@@ -80,7 +105,7 @@ const Header = () => {
               </Button>
             </Link>
           </div>
-          
+
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center space-x-2">
             <Button
@@ -91,7 +116,7 @@ const Header = () => {
             >
               {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
             </Button>
-            <Button 
+            <Button
               variant="ghost"
               size="icon"
               onClick={toggleMenu}
@@ -102,30 +127,45 @@ const Header = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Mobile menu */}
       {isMenuOpen && (
         <div className="md:hidden bg-white dark:bg-neutral-900 border-t border-neutral-200 dark:border-neutral-800">
           <div className="px-4 pt-2 pb-3 space-y-1">
-            <Link href="/" className={`block px-3 py-2 rounded-md font-medium ${location === '/' ? 'bg-primary/10 text-primary' : 'text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800'}`}>
+            <Link
+              href="/"
+              className={`block px-3 py-2 rounded-md font-medium ${location === "/" ? "bg-primary/10 text-primary" : "text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"}`}
+            >
               Home
             </Link>
-            <Link href="/category/programming" className={`block px-3 py-2 rounded-md font-medium ${location.startsWith('/category/programming') ? 'bg-primary/10 text-primary' : 'text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800'}`}>
+            <Link
+              href="/category/programming"
+              className={`block px-3 py-2 rounded-md font-medium ${location.startsWith("/category/programming") ? "bg-primary/10 text-primary" : "text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"}`}
+            >
               Programming
             </Link>
-            <Link href="/category/web-development" className={`block px-3 py-2 rounded-md font-medium ${location.startsWith('/category/web-development') ? 'bg-primary/10 text-primary' : 'text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800'}`}>
+            <Link
+              href="/category/web-development"
+              className={`block px-3 py-2 rounded-md font-medium ${location.startsWith("/category/web-development") ? "bg-primary/10 text-primary" : "text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"}`}
+            >
               Web Development
             </Link>
-            <Link href="/category/design" className={`block px-3 py-2 rounded-md font-medium ${location.startsWith('/category/design') ? 'bg-primary/10 text-primary' : 'text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800'}`}>
+            <Link
+              href="/category/design"
+              className={`block px-3 py-2 rounded-md font-medium ${location.startsWith("/category/design") ? "bg-primary/10 text-primary" : "text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"}`}
+            >
               Design
             </Link>
-            <Link href="/write" className={`block px-3 py-2 rounded-md font-medium ${location === '/write' ? 'bg-primary/10 text-primary' : 'text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800'}`}>
+            <Link
+              href="/write"
+              className={`block px-3 py-2 rounded-md font-medium ${location === "/write" ? "bg-primary/10 text-primary" : "text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"}`}
+            >
               Write Post
             </Link>
           </div>
         </div>
       )}
-      
+
       {/* Mobile Search */}
       <div className="md:hidden border-t border-neutral-200 dark:border-neutral-800 px-4 py-3">
         <SearchBar mobile={true} />

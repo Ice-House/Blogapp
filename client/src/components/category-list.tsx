@@ -6,10 +6,14 @@ import { Category } from "@shared/schema";
 import { Hash } from "lucide-react";
 
 const CategoryList = () => {
-  const { data: categories, isLoading, error } = useQuery({
+  const {
+    data: categories,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["/api/categories"],
   });
-  
+
   if (isLoading) {
     return (
       <Card>
@@ -19,14 +23,14 @@ const CategoryList = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          {[1, 2, 3, 4].map(i => (
+          {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-10 w-full" />
           ))}
         </CardContent>
       </Card>
     );
   }
-  
+
   if (error) {
     return (
       <Card>
@@ -34,12 +38,14 @@ const CategoryList = () => {
           <CardTitle>Categories</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-neutral-600 dark:text-neutral-400">Failed to load categories</p>
+          <p className="text-neutral-600 dark:text-neutral-400">
+            Failed to load categories
+          </p>
         </CardContent>
       </Card>
     );
   }
-  
+
   return (
     <Card>
       <CardHeader>
@@ -48,20 +54,22 @@ const CategoryList = () => {
       <CardContent className="space-y-2">
         {categories?.length > 0 ? (
           categories.map((category: Category) => (
-            <Link 
-              key={category.id} 
-              href={`/category/${category.slug}`}
-            >
+            <Link key={category.id} href={`/category/${category.slug}`}>
               <a className="flex items-center justify-between px-4 py-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md text-neutral-800 dark:text-neutral-200">
                 <span className="flex items-center">
-                  <Hash size={16} className="mr-2 text-neutral-500 dark:text-neutral-400" />
+                  <Hash
+                    size={16}
+                    className="mr-2 text-neutral-500 dark:text-neutral-400"
+                  />
                   {category.name}
                 </span>
               </a>
             </Link>
           ))
         ) : (
-          <p className="text-neutral-600 dark:text-neutral-400 text-center py-2">No categories found</p>
+          <p className="text-neutral-600 dark:text-neutral-400 text-center py-2">
+            No categories found
+          </p>
         )}
       </CardContent>
     </Card>
