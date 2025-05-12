@@ -15,16 +15,10 @@ export function useAuth() {
   // Register a new user
   const registerMutation = useMutation({
     mutationFn: async (userData: UserRegistration) => {
-      return apiRequest('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
+      const response = await apiRequest('POST', '/api/auth/register', userData);
+      return response.json();
     },
     onSuccess: () => {
-      // After successful registration, refetch the current user
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
     },
   });
@@ -32,16 +26,10 @@ export function useAuth() {
   // Login a user
   const loginMutation = useMutation({
     mutationFn: async (credentials: UserLogin) => {
-      return apiRequest('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(credentials),
-      });
+      const response = await apiRequest('POST', '/api/auth/login', credentials);
+      return response.json();
     },
     onSuccess: () => {
-      // After successful login, refetch the current user
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
     },
   });
@@ -49,12 +37,10 @@ export function useAuth() {
   // Logout the current user
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('/api/auth/logout', {
-        method: 'POST',
-      });
+      const response = await apiRequest('POST', '/api/auth/logout');
+      return response.json();
     },
     onSuccess: () => {
-      // After successful logout, refetch the current user (will return 401)
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
     },
   });

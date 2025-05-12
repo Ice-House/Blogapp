@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet";
-import RegisterForm from "../components/auth/register-form";
-import { useAuth } from "../hooks/use-auth";
+import RegisterForm from "@/components/auth/register-form";
+import { useAuth } from "@/hooks/use-auth";
 import { Redirect } from "wouter";
 
 export default function RegisterPage() {

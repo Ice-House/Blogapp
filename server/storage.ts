@@ -4,7 +4,8 @@ import {
   Tag, InsertTag, 
   Comment, InsertComment, 
   Media, InsertMedia, 
-  PostTag, InsertPostTag 
+  PostTag, InsertPostTag,
+  User, InsertUser
 } from "@shared/schema";
 
 export interface IStorage {
@@ -51,6 +52,14 @@ export interface IStorage {
   getMediaById(id: number): Promise<Media | undefined>;
   createMedia(media: InsertMedia): Promise<Media>;
   deleteMedia(id: number): Promise<boolean>;
+  
+  // User operations
+  getUserById(id: number): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
+  deleteUser(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -85,6 +94,24 @@ export class MemStorage implements IStorage {
     
     // Initialize with some default data
     this.initializeDefaultData();
+  }
+  getUserById(_id: number): Promise<User | undefined> {
+    throw new Error("Method not implemented.");
+  }
+  getUserByUsername(_username: string): Promise<User | undefined> {
+    throw new Error("Method not implemented.");
+  }
+  getUserByEmail(_email: string): Promise<User | undefined> {
+    throw new Error("Method not implemented.");
+  }
+  createUser(_user: InsertUser): Promise<User> {
+    throw new Error("Method not implemented.");
+  }
+  updateUser(_id: number, _user: Partial<InsertUser>): Promise<User | undefined> {
+    throw new Error("Method not implemented.");
+  }
+  deleteUser(_id: number): Promise<boolean> {
+    throw new Error("Method not implemented.");
   }
   
   private initializeDefaultData() {
@@ -376,8 +403,8 @@ Docker can significantly improve your development workflow!
       }
     ];
     
-    samplePosts.forEach(async (post) => {
-          const createdPost = await this.createPost(post);
+    samplePosts.forEach(async post => {
+      const createdPost = await this.createPost(post);
       
       // Add tags to posts
       if (createdPost.id === 1) {
@@ -464,6 +491,7 @@ Docker can significantly improve your development workflow!
       excerpt: post.excerpt ?? null, // Ensure excerpt is either a string or null
       coverImage: post.coverImage ?? null, // Ensure coverImage is either a string or null
       published: post.published ?? false, // Ensure published has a default value
+      userId: post.userId ?? null, // Ensure userId is either a number or null
       categoryId: post.categoryId ?? null, // Ensure categoryId is either a number or null
     };
     
@@ -659,11 +687,13 @@ Docker can significantly improve your development workflow!
       ...comment,
       id: this.commentId++,
       createdAt: new Date(),
-      content: typeof comment.content === "string" ? comment.content : "", // Ensure content is a string or default to an empty string
-      postId: Array.isArray(comment.postId) ? comment.postId[0] : (comment.postId ?? 0), // Ensure postId is a number
-      authorName: Array.isArray(comment.authorName) ? comment.authorName.join(", ") : (comment.authorName ?? "Anonymous"), // Ensure authorName is a string
-      authorEmail: Array.isArray(comment.authorEmail) ? comment.authorEmail.join(", ") : (comment.authorEmail ?? "unknown@example.com"), // Ensure authorEmail is a string
-      parentId: Array.isArray(comment.parentId) ? comment.parentId[0] : comment.parentId ?? null, // Ensure parentId is a number or null
+      content: comment.content,
+      authorName: Array.isArray(comment.authorName) && comment.authorName.length > 0 ? comment.authorName[0] : "Unknown",
+      authorEmail: Array.isArray(comment.authorEmail) && comment.authorEmail.length > 0 ? comment.authorEmail[0] : "Unknown",
+      postId: comment.postId,
+      parentId: Array.isArray(comment.parentId) && comment.parentId.length === 1 && typeof comment.parentId[0] === 'number' 
+        ? comment.parentId[0] 
+        : null, // Ensure parentId is either a number or null
     };
     
     this.comments.set(newComment.id, newComment);
@@ -728,3 +758,30 @@ import { DatabaseStorage } from "./database-storage";
 
 // Use DatabaseStorage for persistent storage with PostgreSQL
 export const storage = new DatabaseStorage();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

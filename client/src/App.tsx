@@ -1,4 +1,5 @@
 import { Switch, Route } from "wouter";
+// ...existing imports...
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -11,6 +12,8 @@ import Post from "@/pages/post";
 import CreatePost from "@/pages/create-post";
 import Category from "@/pages/category";
 import Search from "@/pages/search";
+import Login from "@/pages/login"; // Add these imports
+import Register from "@/pages/register"; // for your auth pages
 
 function Router() {
   return (
@@ -19,6 +22,9 @@ function Router() {
       <main className="flex-grow">
         <Switch>
           <Route path="/" component={Home} />
+          <Route path="/login" component={Login} /> {/* Add login route */}
+          <Route path="/register" component={Register} />{" "}
+          {/* Add register route */}
           <Route path="/post/:slug" component={Post} />
           <Route path="/write" component={CreatePost} />
           <Route path="/category/:slug" component={Category} />
@@ -43,3 +49,4 @@ function App() {
 }
 
 export default App;
+// ...existing code...

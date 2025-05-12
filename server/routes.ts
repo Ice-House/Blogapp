@@ -2,7 +2,8 @@ import express, { type Express, type Request, type Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
-import { insertPostSchema, insertCategorySchema, insertTagSchema, insertCommentSchema, insertMediaSchema } from "@shared/schema";
+import { insertPostSchema, insertCategorySchema, insertTagSchema, insertCommentSchema, insertMediaSchema, userRegistrationSchema, userLoginSchema } from "@shared/schema";
+import { configureAuth, register, login, logout, getCurrentUser, isAuthenticated } from "./auth";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -42,8 +43,17 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Configure authentication middleware
+  configureAuth(app);
+  
   // Set up API routes
   const apiRouter = app.route("/api");
+  
+  // Auth routes
+  app.post("/api/auth/register", register);
+  app.post("/api/auth/login", login);
+  app.post("/api/auth/logout", logout);
+  app.get("/api/auth/me", getCurrentUser);
   
   // Posts routes
   app.get("/api/posts", async (req: Request, res: Response) => {
@@ -72,9 +82,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post("/api/posts", async (req: Request, res: Response) => {
+  app.post("/api/posts", isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const validatedData = insertPostSchema.parse(req.body);
+      // Get the authenticated user
+      const user = req.user as any;
+      
+      // Combine form data with user ID
+      const postData = {
+        ...req.body,
+        userId: user.id // Associate post with the authenticated user
+      };
+      
+      const validatedData = insertPostSchema.parse(postData);
       const post = await storage.createPost(validatedData);
       
       // Handle tags if provided
@@ -97,7 +116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.put("/api/posts/:id", async (req: Request, res: Response) => {
+  app.put("/api/posts/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       
@@ -109,6 +128,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!existingPost) {
         return res.status(404).json({ message: "Post not found" });
+      }
+      
+      // Check if user is the author of the post
+      const user = req.user as any;
+      if (existingPost.userId !== user.id) {
+        return res.status(403).json({ message: "You don't have permission to edit this post" });
       }
       
       // Validate partial update data
@@ -150,7 +175,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.delete("/api/posts/:id", async (req: Request, res: Response) => {
+  app.delete("/api/posts/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       
@@ -162,6 +187,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!existingPost) {
         return res.status(404).json({ message: "Post not found" });
+      }
+      
+      // Check if user is the author of the post
+      const user = req.user as any;
+      if (existingPost.userId !== user.id) {
+        return res.status(403).json({ message: "You don't have permission to delete this post" });
       }
       
       const deleted = await storage.deletePost(id);
@@ -320,17 +351,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // File upload route
-  app.post("/api/upload", upload.single("file"), async (req: Request, res: Response) => {
+  app.post("/api/upload", isAuthenticated, upload.single("file"), async (req: Request, res: Response) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
       }
       
+      const user = req.user as any;
+      
       const mediaData = {
         filename: req.file.originalname,
         filePath: req.file.path,
         fileType: req.file.mimetype,
-        fileSize: req.file.size
+        fileSize: req.file.size,
+        // Store user ID with the media if needed for future features
+        // userId: user.id
       };
       
       const media = await storage.createMedia(mediaData);
@@ -354,3 +389,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   return httpServer;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
