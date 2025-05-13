@@ -28,6 +28,9 @@ drizzle/compiled
 # Environment variables
 .env
 .env.*
+!.env.example
+.vercel
+dist/
 
 # PostgreSQL dumps or temp files
 *.sql
@@ -63,3 +66,5 @@ server/public
 
 
 
+
+.vercel

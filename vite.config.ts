@@ -27,5 +27,46 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    chunkSizeWarningLimit: 600,
+    minify: 'esbuild',
+    sourcemap: false, // Disable sourcemaps in production
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: [
+            'react', 
+            'react-dom',
+            'wouter',
+            'lucide-react'
+          ]
+        },
+        // Add cache busting
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
+      }
+    }
   },
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+    'process.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL)
+  }
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

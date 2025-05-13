@@ -1,11 +1,41 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
+import session from 'express-session';
+import pg from 'pg';
+import ConnectPgSimple from 'connect-pg-simple';
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+
+// Create PostgreSQL pool
+const pool = new pg.Pool({
+  connectionString: process.env.DATABASE_URL
+});
+
+// Initialize PostgreSQL session store properly
+const pgSession = ConnectPgSimple(session);
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Configure session middleware with PostgreSQL store
+app.use(session({
+  store: new pgSession({
+    pool,
+    createTableIfMissing: true,
+    tableName: 'user_sessions',
+    schemaName: 'public'
+  }),
+  secret: process.env.JWT_SECRET || 'your-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+  }
+}));
+
+// ...rest of your existing code...
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -48,27 +78,51 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-
   const port = 3000;
   server.listen({
     port,
-    host: "localhost", // Changed from "0.0.0.0" to "localhost"
-    // removed reusePort as it's not supported on Windows
+    host: "localhost",
   }, () => {
     log(`serving on port ${port}`);
   });
-})();
+
+  // Graceful shutdown
+  process.on('SIGTERM', () => {
+    server.close(() => {
+      pool.end();
+    });
+  });
+})().catch(console.error);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
