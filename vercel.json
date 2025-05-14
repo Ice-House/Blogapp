@@ -1,5 +1,20 @@
 {
-  "buildCommand": "npm run build:client",
-  "outputDirectory": "dist/public",
-  "rewrites": [{ "source": "/(.*)", "destination": "/" }]
+  "buildCommand": "npm run build:client:staging",
+  "outputDirectory": "server/public",
+  "rewrites": [{ "source": "/(.*)", "destination": "/" }],
+  "env": {
+    "NODE_ENV": "staging",
+    "DATABASE_URL": "@railway_postgresql_url"
+  },
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ]
 }

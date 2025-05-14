@@ -27,8 +27,6 @@ drizzle/compiled
 
 # Environment variables
 .env
-.env.*
-!.env.example
 .vercel
 dist/
 
