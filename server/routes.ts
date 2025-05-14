@@ -1,14 +1,12 @@
-import express, { type Express, type Request, type Response, NextFunction } from "express";
+import express, { type Express, type Request, type Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
-import { insertPostSchema, insertCategorySchema, insertTagSchema, insertCommentSchema, insertMediaSchema } from "@shared/schema";
+import { insertPostSchema, insertCategorySchema, insertTagSchema, insertCommentSchema, insertMediaSchema, userRegistrationSchema, userLoginSchema } from "@shared/schema";
 import { configureAuth, register, login, logout, getCurrentUser, isAuthenticated } from "./auth";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-
-
 
 // Set up multer for file uploads
 const uploadDir = path.join(process.cwd(), "uploads");
@@ -19,10 +17,10 @@ if (!fs.existsSync(uploadDir)){
 }
 
 const storage2 = multer.diskStorage({
-  destination: function (req, file, cb) {
+  destination: function (_req, _file, cb) {
     cb(null, uploadDir);
   },
-  filename: function (req, file, cb) {
+  filename: function (_req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const ext = path.extname(file.originalname);
     cb(null, file.fieldname + '-' + uniqueSuffix + ext);
@@ -43,88 +41,263 @@ const upload = multer({
     }
   }
 });
-// ... existing multer configuration ...
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Add request logging middleware
-  app.use((req: Request, res: Response, next: NextFunction) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
-    next();
-  });
-
-  // Add health check endpoint
-  app.get("/api/health", async (req: Request, res: Response) => {
-    try {
-      console.log('🔍 Running health check...');
-      const dbResult = await storage.getAllPosts();
-      console.log('✅ Database connection successful');
-      res.json({ 
-        status: 'healthy',
-        database: 'connected',
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error('❌ Health check failed:', error);
-      res.status(500).json({ 
-        status: 'error',
-        database: 'disconnected',
-        error: error instanceof Error ? error.message : String(error)
-      });
-    }
-  });
-
   // Configure authentication middleware
   configureAuth(app);
-
-  // Posts routes with enhanced logging
-  app.get("/api/posts", async (req: Request, res: Response) => {
+  
+  // Set up API routes
+  const apiRouter = app.route("/api");
+  
+  // Auth routes
+  app.post("/api/auth/register", register);
+  app.post("/api/auth/login", login);
+  app.post("/api/auth/logout", logout);
+  app.get("/api/auth/me", getCurrentUser);
+  
+  // Posts routes
+  app.get("/api/posts", async (_req: Request, res: Response) => {
     try {
-      console.log('🔍 Fetching all posts...');
       const posts = await storage.getAllPosts();
-      console.log(`✅ Successfully fetched ${posts.length} posts`);
       res.json(posts);
     } catch (error) {
-      console.error('❌ Error fetching posts:', error);
-      res.status(500).json({ 
-        message: "Error fetching posts", 
-        error: error instanceof Error ? error.message : String(error)
-      });
+      res.status(500).json({ message: "Error fetching posts", error });
     }
   });
-
-  // Categories routes with enhanced logging
-  app.get("/api/categories", async (req: Request, res: Response) => {
+  
+  app.get("/api/posts/:slug", async (req: Request, res: Response) => {
     try {
-      console.log('🔍 Fetching all categories...');
+      const post = await storage.getPostBySlug(req.params.slug);
+      
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+      
+      const tags = await storage.getTagsByPostId(post.id);
+      const comments = await storage.getCommentsByPostId(post.id);
+      
+      res.json({ post, tags, comments });
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching post", error });
+    }
+  });
+  
+  app.post("/api/posts", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      // Get the authenticated user
+      const user = req.user as any;
+      
+      // Combine form data with user ID
+      const postData = {
+        ...req.body,
+        userId: user.id // Associate post with the authenticated user
+      };
+      
+      const validatedData = insertPostSchema.parse(postData);
+      const post = await storage.createPost(validatedData);
+      
+      // Handle tags if provided
+      if (req.body.tags && Array.isArray(req.body.tags)) {
+        for (const tagId of req.body.tags) {
+          try {
+            await storage.addTagToPost({ postId: post.id, tagId });
+          } catch (error) {
+            console.error("Error adding tag to post:", error);
+          }
+        }
+      }
+      
+      res.status(201).json(post);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid post data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Error creating post", error });
+    }
+  });
+  
+  app.put("/api/posts/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid post ID" });
+      }
+      
+      const existingPost = await storage.getPostById(id);
+      
+      if (!existingPost) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+      
+      // Check if user is the author of the post
+      const user = req.user as any;
+      if (existingPost.userId !== user.id) {
+        return res.status(403).json({ message: "You don't have permission to edit this post" });
+      }
+      
+      // Validate partial update data
+      const validatedData = insertPostSchema.partial().parse(req.body);
+      const updatedPost = await storage.updatePost(id, validatedData);
+      
+      // Update tags if provided
+      if (req.body.tags && Array.isArray(req.body.tags)) {
+        // Get current tags
+        const currentTags = await storage.getTagsByPostId(id);
+        const currentTagIds = currentTags.map(tag => tag.id);
+        const newTagIds = req.body.tags;
+        
+        // Remove tags that are no longer associated
+        for (const tagId of currentTagIds) {
+          if (!newTagIds.includes(tagId)) {
+            await storage.removeTagFromPost(id, tagId);
+          }
+        }
+        
+        // Add new tags
+        for (const tagId of newTagIds) {
+          if (!currentTagIds.includes(tagId)) {
+            try {
+              await storage.addTagToPost({ postId: id, tagId });
+            } catch (error) {
+              console.error("Error adding tag to post:", error);
+            }
+          }
+        }
+      }
+      
+      res.json(updatedPost);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid post data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Error updating post", error });
+    }
+  });
+  
+  app.delete("/api/posts/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid post ID" });
+      }
+      
+      const existingPost = await storage.getPostById(id);
+      
+      if (!existingPost) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+      
+      // Check if user is the author of the post
+      const user = req.user as any;
+      if (existingPost.userId !== user.id) {
+        return res.status(403).json({ message: "You don't have permission to delete this post" });
+      }
+      
+      const deleted = await storage.deletePost(id);
+      
+      if (deleted) {
+        res.status(204).end();
+      } else {
+        res.status(500).json({ message: "Failed to delete post" });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting post", error });
+    }
+  });
+  
+  // Search posts
+  app.get("/api/search", async (req: Request, res: Response) => {
+    try {
+      const query = req.query.q as string;
+      
+      if (!query) {
+        return res.status(400).json({ message: "Search query is required" });
+      }
+      
+      const results = await storage.searchPosts(query);
+      res.json(results);
+    } catch (error) {
+      res.status(500).json({ message: "Error searching posts", error });
+    }
+  });
+  
+  // Categories routes
+  app.get("/api/categories", async (_req: Request, res: Response) => {
+    try {
       const categories = await storage.getAllCategories();
-      console.log(`✅ Successfully fetched ${categories.length} categories`);
       res.json(categories);
     } catch (error) {
-      console.error('❌ Error fetching categories:', error);
-      res.status(500).json({ 
-        message: "Error fetching categories", 
-        error: error instanceof Error ? error.message : String(error)
-      });
+      res.status(500).json({ message: "Error fetching categories", error });
     }
   });
-
-  // Tags routes with enhanced logging
-  app.get("/api/tags", async (req: Request, res: Response) => {
+  
+  app.get("/api/categories/:slug", async (req: Request, res: Response) => {
     try {
-      console.log('🔍 Fetching all tags...');
+      const category = await storage.getCategoryBySlug(req.params.slug);
+      
+      if (!category) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+      
+      const posts = await storage.getPostsByCategory(category.id);
+      res.json({ category, posts });
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching category", error });
+    }
+  });
+  
+  app.post("/api/categories", async (req: Request, res: Response) => {
+    try {
+      const validatedData = insertCategorySchema.parse(req.body);
+      const category = await storage.createCategory(validatedData);
+      res.status(201).json(category);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid category data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Error creating category", error });
+    }
+  });
+  
+  // Tags routes
+  app.get("/api/tags", async (_req: Request, res: Response) => {
+    try {
       const tags = await storage.getAllTags();
-      console.log(`✅ Successfully fetched ${tags.length} tags`);
       res.json(tags);
     } catch (error) {
-      console.error('❌ Error fetching tags:', error);
-      res.status(500).json({ 
-        message: "Error fetching tags", 
-        error: error instanceof Error ? error.message : String(error)
-      });
+      res.status(500).json({ message: "Error fetching tags", error });
     }
   });
-
-
+  
+  app.get("/api/tags/:slug", async (req: Request, res: Response) => {
+    try {
+      const tag = await storage.getTagBySlug(req.params.slug);
+      
+      if (!tag) {
+        return res.status(404).json({ message: "Tag not found" });
+      }
+      
+      const posts = await storage.getPostsByTag(tag.id);
+      res.json({ tag, posts });
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching tag", error });
+    }
+  });
+  
+  app.post("/api/tags", async (req: Request, res: Response) => {
+    try {
+      const validatedData = insertTagSchema.parse(req.body);
+      const tag = await storage.createTag(validatedData);
+      res.status(201).json(tag);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid tag data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Error creating tag", error });
+    }
+  });
   
   // Comments routes
   app.get("/api/posts/:postId/comments", async (req: Request, res: Response) => {
@@ -205,59 +378,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error uploading file", error });
     }
   });
-
-  // ... rest of your existing routes ...
-
-  // Add global error handler
-  app.use((error: any, req: Request, res: Response, next: NextFunction) => {
-    console.error('❌ Global error:', error);
-    res.status(500).json({
-      message: "Internal server error",
-      error: process.env.NODE_ENV === 'development' ? error.message : 'An error occurred'
-    });
-  });
-
-
-    // File upload route
-    app.post("/api/upload", isAuthenticated, upload.single("file"), async (req: Request, res: Response) => {
-      try {
-        if (!req.file) {
-          return res.status(400).json({ message: "No file uploaded" });
-        }
-        
-        const user = req.user as any;
-        
-        const mediaData = {
-          filename: req.file.originalname,
-          filePath: req.file.path,
-          fileType: req.file.mimetype,
-          fileSize: req.file.size,
-          // Store user ID with the media if needed for future features
-          // userId: user.id
-        };
-        
-        const media = await storage.createMedia(mediaData);
-        
-        res.status(201).json({
-          ...media,
-          url: `/uploads/${path.basename(req.file.path)}`
-        });
-      } catch (error) {
-        res.status(500).json({ message: "Error uploading file", error });
-      }
-    });
-    
-    // Serve uploaded files
-    app.use("/uploads", (req, res, next) => {
-      // Implement basic security checks if needed
-      next();
-    }, express.static(uploadDir));
-
-  // ... your existing file upload and static file serving code ...
-
+  
+  // Serve uploaded files
+  app.use("/uploads", (_req, _res, next) => {
+    // Implement basic security checks if needed
+    next();
+  }, express.static(uploadDir));
+  
   const httpServer = createServer(app);
+  
   return httpServer;
 }
+
 
 
 
