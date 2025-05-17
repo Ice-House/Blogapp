@@ -3,8 +3,7 @@
   "outputDirectory": "server/public",
   "rewrites": [{ "source": "/(.*)", "destination": "/" }],
   "env": {
-    "NODE_ENV": "staging",
-    "DATABASE_URL": "@railway_postgresql_url"
+    "NODE_ENV": "staging"
   },
   "headers": [
     {
