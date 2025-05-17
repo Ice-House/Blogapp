@@ -10,12 +10,15 @@ dotenv.config({
 export default defineConfig({
   schema: "./shared/schema.ts",
   out: "./migrations",
-  dialect: "postgresql",  // Changed from "pg" to "postgresql"
+  dialect: "postgresql",
   dbCredentials: {
     host: "tramway.proxy.rlwy.net",
     port: 16867,
     user: "postgres",
     password: "dLdUlZYrGtMgLEjUEDhaQFZExfkSNlPp",
-    database: "railway"
+    database: "railway",
+    ssl: {
+      rejectUnauthorized: false
+    }
   }
 });
