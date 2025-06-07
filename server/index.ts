@@ -1,4 +1,6 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config({ path: process.env.NODE_ENV === 'staging' ? './.env.staging' : './.env' });
+
 import express, { type Request, Response, NextFunction } from "express";
 import session from 'express-session';
 import pg from 'pg';
@@ -11,14 +13,13 @@ const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL
 });
 
-// Initialize PostgreSQL session store properly
+// Initialize PostgreSQL session store
 const pgSession = ConnectPgSimple(session);
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Configure session middleware with PostgreSQL store
 app.use(session({
   store: new pgSession({
     pool,
@@ -30,13 +31,12 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.NODE_ENV !== 'development',
     maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
   }
 }));
 
-// ...rest of your existing code...
-
+// Custom API logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -55,11 +55,9 @@ app.use((req, res, next) => {
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
-
       if (logLine.length > 80) {
         logLine = logLine.slice(0, 79) + "…";
       }
-
       log(logLine);
     }
   });
@@ -73,7 +71,6 @@ app.use((req, res, next) => {
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
-
     res.status(status).json({ message });
     throw err;
   });
@@ -84,21 +81,51 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  const port = 3000;
-  server.listen({
-    port,
-    host: "localhost",
-  }, () => {
-    log(`serving on port ${port}`);
+  const port = Number(process.env.PORT) || 3000;
+  server.listen(port, () => {
+    log(`Server running on port ${port}`);
   });
 
-  // Graceful shutdown
   process.on('SIGTERM', () => {
     server.close(() => {
       pool.end();
     });
   });
 })().catch(console.error);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

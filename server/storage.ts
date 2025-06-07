@@ -197,7 +197,8 @@ This is just the beginning of your React journey!
         coverImage: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80",
         author: "Alex Johnson",
         categoryId: 1,
-        published: true
+        published: true,
+        userId: 1
       },
       {
         title: "CSS Grid Layout: A Comprehensive Guide",
@@ -255,7 +256,8 @@ This is a powerful way to create responsive layouts!
         coverImage: "https://images.unsplash.com/photo-1517134191118-9d595e4c8c2b?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80",
         author: "Sarah Chen",
         categoryId: 3,
-        published: true
+        published: true,
+        userId: 1
       },
       {
         title: "Introduction to Express.js",
@@ -322,7 +324,8 @@ Express makes building web applications with Node.js straightforward and enjoyab
         coverImage: "https://images.unsplash.com/photo-1520085601670-ee14aa5fa3e8?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80",
         author: "Michael Brown",
         categoryId: 2,
-        published: true
+        published: true,
+        userId: 1
       },
       {
         title: "Understanding Docker for Development",
@@ -399,7 +402,8 @@ Docker can significantly improve your development workflow!
         coverImage: "https://images.unsplash.com/photo-1561883088-039e53143d73?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80",
         author: "David Wilson",
         categoryId: 4,
-        published: true
+        published: true,
+        userId: 1
       }
     ];
     
@@ -421,18 +425,16 @@ Docker can significantly improve your development workflow!
       // Add comments to posts
       if (createdPost.id === 1) {
         this.createComment({
-          content: ["Great introduction to React! Looking forward to more tutorials."],
-          authorName: ["Jane Doe"],
-          authorEmail: ["jane@example.com"],
-          postId: [createdPost.id], // Wrap the number in an array to match the expected type
+          content: "Great introduction to React! Looking forward to more tutorials.",
+          userId: 1,
+          postId: createdPost.id, // Use the number directly to match the expected type
           parentId: null
         });
         
         this.createComment({
-          content: ["I'm having trouble with hooks. Could you explain them more?"],
-          authorName: ["John Smith"],
-          authorEmail: ["john@example.com"],
-          postId: [createdPost.id],
+          content: "I'm having trouble with hooks. Could you explain them more?",
+          userId: 1,
+          postId: createdPost.id,
           parentId: null
         });
       }
@@ -493,6 +495,7 @@ Docker can significantly improve your development workflow!
       published: post.published ?? false, // Ensure published has a default value
       userId: post.userId ?? null, // Ensure userId is either a number or null
       categoryId: post.categoryId ?? null, // Ensure categoryId is either a number or null
+      status: (post as any).status ?? "published", // Ensure status is always a string
     };
     
     this.posts.set(newPost.id, newPost);
@@ -546,10 +549,13 @@ Docker can significantly improve your development workflow!
   }
   
   async createCategory(category: InsertCategory): Promise<Category> {
+    const now = new Date();
     const newCategory: Category = {
       ...category,
       id: this.categoryId++,
       description: category.description ?? null, // Ensure description is either a string or null
+      createdAt: now,
+      updatedAt: now,
     };
     
     this.categories.set(newCategory.id, newCategory);
@@ -598,9 +604,11 @@ Docker can significantly improve your development workflow!
   }
   
   async createTag(tag: InsertTag): Promise<Tag> {
+    const now = new Date();
     const newTag: Tag = {
       ...tag,
       id: this.tagId++,
+      createdAt: now,
     };
     
     this.tags.set(newTag.id, newTag);
@@ -657,6 +665,7 @@ Docker can significantly improve your development workflow!
     const newPostTag: PostTag = {
       ...postTag,
       id: this.postTagId++,
+      createdAt: new Date()
     };
     
     this.postTags.set(newPostTag.id, newPostTag);
@@ -683,17 +692,19 @@ Docker can significantly improve your development workflow!
   }
   
   async createComment(comment: InsertComment): Promise<Comment> {
+    const now = new Date();
     const newComment: Comment = {
       ...comment,
       id: this.commentId++,
-      createdAt: new Date(),
+      createdAt: now,
+      updatedAt: now,
       content: comment.content,
-      authorName: Array.isArray(comment.authorName) && comment.authorName.length > 0 ? comment.authorName[0] : "Unknown",
-      authorEmail: Array.isArray(comment.authorEmail) && comment.authorEmail.length > 0 ? comment.authorEmail[0] : "Unknown",
       postId: comment.postId,
       parentId: Array.isArray(comment.parentId) && comment.parentId.length === 1 && typeof comment.parentId[0] === 'number' 
         ? comment.parentId[0] 
         : null, // Ensure parentId is either a number or null
+      status: (comment as any).status ?? "approved", // Default status if not provided
+      userId: (comment as any).userId ?? 1 // Default userId if not provided
     };
     
     this.comments.set(newComment.id, newComment);
@@ -743,6 +754,7 @@ Docker can significantly improve your development workflow!
       ...media,
       id: this.mediaId++,
       uploadedAt: new Date(),
+      altText: media.altText ?? null, // Ensure altText is either a string or null
     };
     
     this.media.set(newMedia.id, newMedia);

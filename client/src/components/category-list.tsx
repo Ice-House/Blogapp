@@ -10,7 +10,7 @@ const CategoryList = () => {
     data: categories,
     isLoading,
     error,
-  } = useQuery({
+  } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
 
@@ -52,8 +52,8 @@ const CategoryList = () => {
         <CardTitle>Categories</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        {categories?.length > 0 ? (
-          categories.map((category: Category) => (
+        {(categories ?? []).length > 0 ? (
+          (categories ?? []).map((category: Category) => (
             <Link key={category.id} href={`/category/${category.slug}`}>
               <a className="flex items-center justify-between px-4 py-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md text-neutral-800 dark:text-neutral-200">
                 <span className="flex items-center">

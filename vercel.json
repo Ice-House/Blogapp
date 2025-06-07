@@ -1,6 +1,6 @@
 {
   "buildCommand": "npm run build:client:staging",
-  "outputDirectory": "server/public",
+  "outputDirectory": "dist/public",
   "rewrites": [{ "source": "/(.*)", "destination": "/" }],
   "env": {
     "NODE_ENV": "staging"

@@ -232,15 +232,19 @@ export class DatabaseStorage implements IStorage {
       content: comment.content,
       createdAt: comment.createdAt,
       postId: comment.postId,
-      authorName: comment.authorName,
-      authorEmail: comment.authorEmail,
+      userId: comment.userId,
       parentId: comment.parentId ?? null,
+      status: comment.status,
+      updatedAt: comment.updatedAt,
     }));
   }
 
   async createComment(comment: InsertComment): Promise<Comment> {
     const result = await db.insert(comments).values(comment).returning();
     const newComment = Array.isArray(result) ? result[0] : undefined;
+    if (!newComment) {
+      throw new Error("Failed to create comment");
+    }
     return newComment;
   }
 
@@ -328,7 +332,7 @@ export class DatabaseStorage implements IStorage {
     // Update posts to remove user reference
     await db
       .update(posts)
-      .set({ userId: null })
+      .set({ userId: undefined })
       .where(eq(posts.userId, id));
     
     // Delete the user

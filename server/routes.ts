@@ -364,8 +364,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         filePath: req.file.path,
         fileType: req.file.mimetype,
         fileSize: req.file.size,
-        // Store user ID with the media if needed for future features
-        // userId: user.id
+        userId: user.id
       };
       
       const media = await storage.createMedia(mediaData);
@@ -389,72 +388,4 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   return httpServer;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
